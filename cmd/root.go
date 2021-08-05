@@ -19,12 +19,12 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "seccloud",
+	Use:   "blacksite",
 	Short: "Secure Cloud Creator",
-	Long: `seccloud - short for Secure Cloud - stands up a secure 
+	Long: `blacksite - short for Secure Cloud - stands up a secure 
 cloud presence.
 
-seccloud allows you to stand up a suite of applications in a zero trust
+blacksite allows you to stand up a suite of applications in a zero trust
 security architecture at a cloud provider of your choice.`,
 	Version: "0.1.0",
 	// Uncomment the following line if your bare application
@@ -45,7 +45,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.seccloud.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.blacksite.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -65,10 +65,10 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".seccloud" (without extension).
+		// Search config in home directory with name ".blacksite" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".seccloud")
+		viper.SetConfigName(".blacksite")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

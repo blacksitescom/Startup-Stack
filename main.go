@@ -6,7 +6,7 @@ Check LICENSE for details.
 */
 package main
 
-import "github.com/gordonianj/seccloud/cmd"
+import "github.com/gordonianj/blacksite/cmd"
 
 func main() {
 	cmd.Execute()

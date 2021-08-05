@@ -27,6 +27,6 @@ RUN rm -f terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 WORKDIR /app
 COPY main.go ./
 COPY cmd ./cmd
-RUN go mod init github.com/gordonianj/seccloud
+RUN go mod init github.com/gordonianj/blacksite
 RUN go mod tidy
 RUN go build

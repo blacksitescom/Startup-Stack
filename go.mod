@@ -1,4 +1,4 @@
-module github.com/gordonianj/seccloud
+module github.com/gordonianj/blacksite
 
 go 1.16
 
@@ -7,4 +7,4 @@ require (
 	github.com/spf13/viper v1.8.1 // indirect
 )
 
-replace github.com/gordonianj/seccloud => ../seccloud
+replace github.com/gordonianj/blacksite => ../blacksite
