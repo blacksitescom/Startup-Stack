@@ -20,12 +20,10 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "blacksite",
-	Short: "Secure Cloud Creator",
-	Long: `blacksite - short for Secure Cloud - stands up a secure 
-cloud presence.
-
-blacksite allows you to stand up a suite of applications in a zero trust
-security architecture at a cloud provider of your choice.`,
+	Short: "Zero-trust Tool",
+	Long: `blacksite enables creation of zero-trust architecture with relative ease.
+Use it to stand up a suite of applications in a zero-trust architecture 
+at a cloud provider of your choice, or to...`,
 	Version: "0.1.0",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
