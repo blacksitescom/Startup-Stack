@@ -26,7 +26,14 @@ RUN rm -f terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
 WORKDIR /app
 COPY main.go ./
+COPY go.mod  ./
+COPY go.sum ./
 COPY cmd ./cmd
-RUN go mod init github.com/gordonianj/blacksite
-RUN go mod tidy
+COPY images ./images
+#RUN go mod init github.com/gordonianj/blacksite
+#RUN go mod tidy
+#RUN go build
+WORKDIR /app/images
 RUN go build
+WORKDIR /app
+RUN go install github.com/gordonianj/blacksite
