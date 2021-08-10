@@ -15,10 +15,12 @@ import (
 // scloudCmd represents the scloud command
 var scloudCmd = &cobra.Command{
 	Use:   "scloud",
-	Short: "scloud creates and manages secure cloud environments",
-	Long: `scloud raises a custom cloud environment with a zero-trust
-architecture, based on your inputs, and then manages the development 
-and operations lifecycle of the environment.`,
+	Short: "Manage secure cloud environments",
+	Long: `
+	
+	Add cloud environments with the add command
+	Delete cloud environments with the delete command
+	List cloud environments with the list command`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("scloud called")
 	},
