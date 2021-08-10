@@ -3,6 +3,7 @@ go 1.16
 module github.com/gordonianj/blacksite
 
 replace github.com/gordonianj/blacksite => /Users/iangordon/Projects/blacksite/app
+
 require (
 	github.com/spf13/cast v1.4.0 // indirect
 	github.com/spf13/cobra v1.2.1 // indirect
