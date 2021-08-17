@@ -9,13 +9,13 @@ import (
 	"sort"
 )
 
-// ImagesList represents a list of compute images
-type ImagesList struct {
+// Images represents a list of compute images
+type Images struct {
 	Images []string
 }
 
 // Search searches for images in the list
-func (il *ImagesList) Search(image string) (bool, int) {
+func (il *Images) Search(image string) (bool, int) {
 	sort.Slice(il.Images, func(i, j int) bool {
 		return il.Images[i] < il.Images[j]
 	})
@@ -30,29 +30,39 @@ func (il *ImagesList) Search(image string) (bool, int) {
 }
 
 // Add adds an image to the list
-func (il *ImagesList) Add(image string) error {
+func (il *Images) Add(image string) error {
+	// TODO: Test for AWS access key and secret key in env
 	if found, _ := il.Search(image); found {
 		return fmt.Errorf("image %s already in the list", image)
 	}
 
-	// TODO: Create an image at a cloud provider unless exists there
 	prg := "packer"
-	arg1 := "build"
-	arg2 := "-var-file=../packer-files/variables.json"
-	arg3 := "../packer-files/template.json"
-	cmd := exec.Command(prg, arg1, arg2, arg3)
-	stdout, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("packer failed: %s", err.Error())
+
+	initPrgSub := "init"
+	initPrgDir := "images/packer-files/"
+	initCmd := exec.Command(prg, initPrgSub, initPrgDir)
+	initStdout, initErr := initCmd.Output()
+	if initErr != nil {
+		return fmt.Errorf("packer failed: %s %s", initErr, initStdout)
 	}
 
-	//il.Images = append(il.Images, image)
-	fmt.Println(stdout)
-	return nil
+	buildPrgSub := "build"
+	buildTemplate := "images/packer-files/aws-ubuntu-xenial.pkr.hcl"
+	buildCmd := exec.Command(prg, buildPrgSub, buildTemplate)
+	env := os.Environ()
+	env = append(env, fmt.Sprintf("PKR_VAR_ami_name=%s", image))
+	buildCmd.Env = env
+	buildStdout, buildErr := buildCmd.Output()
+	if buildErr != nil {
+		return fmt.Errorf("packer failed: %s", buildErr)
+	}
+
+	il.Images = append(il.Images, image)
+	return fmt.Errorf("packer succeeded: %s", buildStdout)
 }
 
 // Remove removes an image from the list
-func (il *ImagesList) Remove(image string) error {
+func (il *Images) Remove(image string) error {
 	if found, i := il.Search(image); found {
 		// TODO: Remove image from cloud provider if exists there
 		il.Images = append(il.Images[:i], il.Images[i+1:]...)
@@ -63,7 +73,7 @@ func (il *ImagesList) Remove(image string) error {
 }
 
 // Load obtains images from an images file
-func (il *ImagesList) Load(imagesFile string) error {
+func (il *Images) Load(imagesFile string) error {
 	// TODO: Load file from cloud provider
 	f, err := os.Open(imagesFile)
 	if err != nil {
@@ -85,7 +95,7 @@ func (il *ImagesList) Load(imagesFile string) error {
 }
 
 // Save saves images to an images file
-func (il *ImagesList) Save(imagesFile string) error {
+func (il *Images) Save(imagesFile string) error {
 	output := ""
 
 	for _, i := range il.Images {

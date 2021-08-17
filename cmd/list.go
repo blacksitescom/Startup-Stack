@@ -31,7 +31,7 @@ var listCmd = &cobra.Command{
 }
 
 func listAction(out io.Writer, imagesFile string, args []string) error {
-	il := &images.ImagesList{}
+	il := &images.Images{}
 
 	if err := il.Load(imagesFile); err != nil {
 		return err
@@ -58,5 +58,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// addCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	listCmd.Flags().StringP("images-file", "f", "blacksite.images", "blacksite images file")
 }

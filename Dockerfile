@@ -1,5 +1,11 @@
 FROM golang:1.16-alpine
 
+ENV PKR_VAR_ami_name=test
+ENV PKR_VAR_instance_type=t2.micro
+ENV PKR_VAR_region=us-west-2
+ENV PKR_VAR_subnet_id=subnet-002fa0d8863ebd706
+ENV PKR_VAR_security_group_id=sg-0c5426731ae8feadc
+
 ENV PACKER_VERSION=1.7.4
 ENV PACKER_SHA256SUM=3660064a56a174a6da5c37ee6b36107098c6b37e35cc84feb2f7f7519081b1b0
 
@@ -37,3 +43,5 @@ WORKDIR /app/images
 RUN go build
 WORKDIR /app
 RUN go install github.com/gordonianj/blacksite
+ENV PACKER_PLUGIN_PATH=/app/images/packer-files/plugins 
+ENV PACKER_LOG=1

@@ -7,10 +7,37 @@ packer {
   }
 }
 
+variable "ami_name" {
+  type = string
+  default = "null" 
+}
+
+variable "instance_type" {
+  type = string
+  default = "t2.micro"
+}
+
+variable "region" {
+  type = string
+  default = "us-west-2"
+}
+
+variable "subnet_id" {
+  type = string
+  default = null
+}
+
+variable "security_group_id" {
+  type = string
+  default = null
+}
+
 source "amazon-ebs" "ubuntu" {
-  ami_name      = "learn-packer-linux-aws"
-  instance_type = "t2.micro"
-  region        = "us-west-2"
+  ami_name          = var.ami_name 
+  instance_type     = var.instance_type 
+  region            = var.region 
+  subnet_id         = var.subnet_id 
+  security_group_id = var.security_group_id 
   source_ami_filter {
     filters = {
       name                = "ubuntu/images/*ubuntu-xenial-16.04-amd64-server-*"
@@ -21,6 +48,9 @@ source "amazon-ebs" "ubuntu" {
     owners      = ["099720109477"]
   }
   ssh_username = "ubuntu"
+  tags = {
+    BuiltBy = "Blacksite"
+  }
 }
 
 build {
@@ -29,4 +59,3 @@ build {
     "source.amazon-ebs.ubuntu"
   ]
 }
-
