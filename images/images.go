@@ -4,9 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"sort"
+	"sync"
+
+	"github.com/gordonianj/blacksite/execHelpers"
 )
 
 // Images represents a list of compute images
@@ -31,6 +35,7 @@ func (il *Images) Search(image string) (bool, int) {
 
 // Add adds an image to the list
 func (il *Images) Add(image string) error {
+
 	// TODO: Test for AWS access key and secret key in env
 	if found, _ := il.Search(image); found {
 		return fmt.Errorf("image %s already in the list", image)
@@ -41,21 +46,80 @@ func (il *Images) Add(image string) error {
 	initPrgSub := "init"
 	initPrgDir := "images/packer-files/"
 	initCmd := exec.Command(prg, initPrgSub, initPrgDir)
-	initStdout, initErr := initCmd.Output()
+
+	var initStdout, initStderr []byte
+	var errInitStdout, errInitStderr error
+	initStdoutIn, _ := initCmd.StdoutPipe()
+	initStderrIn, _ := initCmd.StderrPipe()
+	initErr := initCmd.Start()
 	if initErr != nil {
-		return fmt.Errorf("packer failed: %s %s", initErr, initStdout)
+		log.Fatalf("cmd.Start() failed with '%s'\n", initErr)
 	}
+
+	// cmd.Wait() should be called only after we finish reading
+	// from stdoutIn and stderrIn.
+	// initWg ensures that we finish
+	var initWg sync.WaitGroup
+	initWg.Add(1)
+	go func() {
+		initStdout, errInitStdout = execHelpers.CopyAndCapture(os.Stdout, initStdoutIn)
+		initWg.Done()
+	}()
+
+	initStderr, errInitStderr = execHelpers.CopyAndCapture(os.Stderr, initStderrIn)
+
+	initWg.Wait()
+
+	initErr = initCmd.Wait()
+	if initErr != nil {
+		log.Fatalf("initCmd.Run() failed with %s\n", initErr)
+	}
+	if errInitStdout != nil || errInitStderr != nil {
+		log.Fatal("failed to capture stdout or stderr\n")
+	}
+	initOutStr, initErrStr := string(initStdout), string(initStderr)
+	fmt.Printf("\nout:\n%s\nerr:\n%s\n", initOutStr, initErrStr)
 
 	buildPrgSub := "build"
 	buildTemplate := "images/packer-files/aws-ubuntu-xenial.pkr.hcl"
 	buildCmd := exec.Command(prg, buildPrgSub, buildTemplate)
+
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("PKR_VAR_ami_name=%s", image))
 	buildCmd.Env = env
-	buildStdout, buildErr := buildCmd.Output()
+
+	var buildStdout, buildStderr []byte
+	var errBuildStdout, errBuildStderr error
+	buildStdoutIn, _ := buildCmd.StdoutPipe()
+	buildStderrIn, _ := buildCmd.StderrPipe()
+	buildErr := buildCmd.Start()
 	if buildErr != nil {
-		return fmt.Errorf("packer failed: %s", buildErr)
+		log.Fatalf("cmd.Start() failed with '%s'\n", buildErr)
 	}
+
+	// cmd.Wait() should be called only after we finish reading
+	// from stdoutIn and stderrIn.
+	// buildWg ensures that we finish
+	var buildWg sync.WaitGroup
+	buildWg.Add(1)
+	go func() {
+		buildStdout, errBuildStdout = execHelpers.CopyAndCapture(os.Stdout, buildStdoutIn)
+		buildWg.Done()
+	}()
+
+	buildStderr, errBuildStderr = execHelpers.CopyAndCapture(os.Stderr, buildStderrIn)
+
+	buildWg.Wait()
+
+	buildErr = buildCmd.Wait()
+	if buildErr != nil {
+		log.Fatalf("buildCmd.Run() failed with %s\n", buildErr)
+	}
+	if errBuildStdout != nil || errBuildStderr != nil {
+		log.Fatal("failed to capture stdout or stderr\n")
+	}
+	buildOutStr, buildErrStr := string(buildStdout), string(buildStderr)
+	fmt.Printf("\nout:\n%s\nerr:\n%s\n", buildOutStr, buildErrStr)
 
 	il.Images = append(il.Images, image)
 	return fmt.Errorf("packer succeeded: %s", buildStdout)
