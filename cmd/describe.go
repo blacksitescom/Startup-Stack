@@ -15,25 +15,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the list command
-var listCmd = &cobra.Command{
-	Use:     "list",
+// describeCmd represents the describe command
+var describeCmd = &cobra.Command{
+	Use:     "describe",
 	Aliases: []string{"l"},
-	Short:   "List the existing images",
+	Short:   "Describe the existing images",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		imagesFile, err := cmd.Flags().GetString("images-file")
+		awsRegion, err := cmd.Flags().GetString("aws-region")
 		if err != nil {
 			return err
 		}
 
-		return listAction(os.Stdout, imagesFile, args)
+		return describeAction(os.Stdout, awsRegion, args)
 	},
 }
 
-func listAction(out io.Writer, imagesFile string, args []string) error {
+func describeAction(out io.Writer, awsRegion string, args []string) error {
 	il := &images.Images{}
 
-	if err := il.Load(imagesFile); err != nil {
+	if err := il.Describe(awsRegion); err != nil {
 		return err
 	}
 
@@ -48,7 +48,7 @@ func listAction(out io.Writer, imagesFile string, args []string) error {
 }
 
 func init() {
-	imagesCmd.AddCommand(listCmd)
+	imagesCmd.AddCommand(describeCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -58,5 +58,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	listCmd.Flags().StringP("images-file", "f", "blacksite.images", "blacksite images file")
+	describeCmd.Flags().StringP("aws-region", "r", "us-west-2", "AWS EC2 region")
 }

@@ -17,8 +17,7 @@ var imagesCmd = &cobra.Command{
 	Long: `
 
 Add images with the add command
-Delete images with the delete command
-List images with the list command`,
+Describe images with the describe command`,
 }
 
 func init() {
