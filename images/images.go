@@ -1,45 +1,27 @@
 package images
 
 import (
-	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
-	"sort"
 	"sync"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/gordonianj/blacksite/execHelpers"
 )
 
-// Images represents a list of compute images
 type Images struct {
 	Images []string
 }
 
-// Search searches for images in the list
-func (il *Images) Search(image string) (bool, int) {
-	sort.Slice(il.Images, func(i, j int) bool {
-		return il.Images[i] < il.Images[j]
-	})
-
-	// TODO: Test for image at cloud provider before returning true
-	i := sort.SearchStrings(il.Images, image)
-	if i < len(il.Images) && il.Images[i] == image {
-		return true, i
-	}
-
-	return false, -1
-}
-
-// Add adds an image to the list
+// Add creates an AMI at EC2 by calling Packer
+// TODO: check for image with same name before adding
+// TODO: create name blacksite-%random% rather than from arg
 func (il *Images) Add(image string) error {
-
-	// TODO: Test for AWS access key and secret key in env
-	if found, _ := il.Search(image); found {
-		return fmt.Errorf("image %s already in the list", image)
-	}
 
 	prg := "packer"
 
@@ -125,41 +107,49 @@ func (il *Images) Add(image string) error {
 	return fmt.Errorf("packer succeeded: %s", buildStdout)
 }
 
-// Remove removes an image from the list
-func (il *Images) Remove(image string) error {
-	if found, i := il.Search(image); found {
-		// TODO: Remove image from cloud provider if exists there
-		il.Images = append(il.Images[:i], il.Images[i+1:]...)
+// Load gets image descriptions from AWS EC2
+func (il *Images) Describe(awsRegion string) error {
+
+	self := "self"
+	ownerSelf := []*string{&self}
+	filterBlacksite := []*ec2.Filter{
+		{
+			Name:   aws.String("tag:BuiltBy"),
+			Values: []*string{aws.String("Blacksite")},
+		},
+	}
+	ownBlacksiteImages := &ec2.DescribeImagesInput{
+		Owners:  ownerSelf,
+		Filters: filterBlacksite,
+	}
+	svc := ec2.New(session.New(&aws.Config{
+		Region: aws.String(awsRegion),
+	}))
+
+	result, err := svc.DescribeImages(ownBlacksiteImages)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return nil
 	}
 
-	return fmt.Errorf("image %s is not in the list", image)
-}
+	fmt.Println(result)
 
-// Load obtains images from an images file
-func (il *Images) Load(imagesFile string) error {
-	// TODO: Load file from cloud provider
-	f, err := os.Open(imagesFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-
-	for scanner.Scan() {
-		// TODO: Test for image at cloud provider before appending it
-		il.Images = append(il.Images, scanner.Text())
-	}
+	//il.Images = append(il.Images, scanner.Text())
 
 	return nil
 }
 
-// Save saves images to an images file
-func (il *Images) Save(imagesFile string) error {
+// Describes the latest AMI
+func (il *Images) Latest() error {
 	output := ""
 
 	for _, i := range il.Images {
@@ -168,5 +158,5 @@ func (il *Images) Save(imagesFile string) error {
 	}
 
 	// TODO: Put file to cloud provider
-	return ioutil.WriteFile(imagesFile, []byte(output), 0644)
+	return nil
 }
